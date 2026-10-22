@@ -4,9 +4,14 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to publish, matching the Capacities SDK release
+        required: true
 
 permissions:
-  contents: read
+  contents: write
   id-token: write
 
 jobs:
@@ -18,6 +23,17 @@ jobs:
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
+      - name: Set version and tag
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          npm version "$VERSION" --no-git-tag-version
+          git commit -am "Release v$VERSION"
+          git tag "v$VERSION"
+          git push origin HEAD "v$VERSION"
+        env:
+          VERSION: ${{ inputs.version }}
       - run: npm ci --ignore-scripts
       - run: npm run lint
       - run: npm run build
