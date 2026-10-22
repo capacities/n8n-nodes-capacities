@@ -21,15 +21,18 @@ The token is stored encrypted by n8n and is sent as a bearer token on every requ
 
 ## Operations
 
-| Resource | Operation       | What it does                                    |
-| -------- | --------------- | ----------------------------------------------- |
-| Space    | Get             | Returns the space associated with the token.    |
-| Space    | Get Structures  | Returns the structures in the space.            |
-| Object   | Get             | Returns one object by ID.                       |
-| Object   | Create          | Creates an object from a JSON body.             |
-| Object   | Delete          | Moves one object to trash by ID.                |
+The node covers every method of the Capacities TypeScript SDK (`@capacities/api`).
 
-The Create operation takes the same JSON body as the Capacities `POST /object` endpoint: `structureId`, optional `collections`, `properties`, and `blocks`. See the [Capacities API reference](https://developers.capacities.io) for the full body schema.
+| Resource     | Operations                                                                                   |
+| ------------ | -------------------------------------------------------------------------------------------- |
+| Space        | Get, Get Structures                                                                          |
+| Object       | Get, Create, Update, Delete, Create From URL, Create From Media                             |
+| Media        | Initialize Upload, Upload Part, Complete Upload, Abort Upload                                |
+| Markdown     | Get, Create, Update                                                                          |
+| Object Query | Search, List by Structure, List by Tag, List by Collection                                   |
+| Block        | Append, Append to Daily Note, Delete, Update                                                 |
+
+Create From Media takes a binary property and runs the full upload flow: it initializes the upload, sends each part, completes it, and aborts if any step fails. The request bodies for JSON operations follow the Capacities API reference.
 
 ## Example workflow
 
