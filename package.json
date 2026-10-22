@@ -1,0 +1,55 @@
+{
+  "name": "n8n-nodes-capacities",
+  "version": "0.1.0",
+  "description": "n8n community node for the Capacities HTTP API.",
+  "keywords": [
+    "n8n-community-node-package",
+    "capacities",
+    "n8n",
+    "api"
+  ],
+  "license": "MIT",
+  "author": {
+    "name": "Capacities"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/capacities/n8n-nodes-capacities.git"
+  },
+  "bugs": {
+    "url": "https://github.com/capacities/n8n-nodes-capacities/issues"
+  },
+  "homepage": "https://github.com/capacities/n8n-nodes-capacities#readme",
+  "type": "commonjs",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/CapacitiesApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/Capacities/Capacities.node.js"
+    ]
+  },
+  "scripts": {
+    "build": "n8n-node build",
+    "lint": "n8n-node lint",
+    "dev": "n8n-node dev"
+  },
+  "devDependencies": {
+    "@n8n/node-cli": "^0.23.0",
+    "n8n-workflow": "2.16.0",
+    "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "eslint": "^9"
+  }
+}
