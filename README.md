@@ -10,14 +10,10 @@ Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes
 
 ## Credentials
 
-The node authenticates with a static API token from Capacities.
+The node supports two credential types. Choose one in the node's **Authentication** field.
 
-1. In Capacities, open Settings and create an API token.
-2. In n8n, create a new **Capacities API** credential and paste the token into **API Token**.
-3. Leave **Base URL** as `https://api.capacities.io` unless you are testing against another environment.
-4. Save. n8n runs a test call to `/space` and reports whether the token works.
-
-The token is stored encrypted by n8n and is sent as a bearer token on every request.
+- **Capacities OAuth2 API** (recommended): authorization code flow with PKCE, using the client ID issued by Capacities. The node requests `api:read`, `api:write`, and `offline_access`, and refreshes tokens automatically.
+- **Capacities API Token**: a personal token (starting with `cap-api-`) generated in the Capacities desktop app under Settings → Capacities API, plus the base URL, which defaults to `https://api.capacities.io`.
 
 ## Operations
 

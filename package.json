@@ -33,7 +33,8 @@
   "n8n": {
     "n8nNodesApiVersion": 1,
     "credentials": [
-      "dist/credentials/CapacitiesApi.credentials.js"
+      "dist/credentials/CapacitiesApi.credentials.js",
+      "dist/credentials/CapacitiesOAuth2Api.credentials.js"
     ],
     "nodes": [
       "dist/nodes/Capacities/Capacities.node.js"

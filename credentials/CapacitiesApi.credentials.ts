@@ -12,7 +12,7 @@ export class CapacitiesApi implements ICredentialType {
 
   icon = 'file:../nodes/Capacities/capacities.svg' as const;
 
-  documentationUrl = 'https://developers.capacities.io';
+  documentationUrl = 'https://developers.capacities.io/api/overview/authentication';
 
   properties: INodeProperties[] = [
     {
@@ -22,7 +22,7 @@ export class CapacitiesApi implements ICredentialType {
       typeOptions: { password: true },
       default: '',
       required: true,
-      description: 'Static API token issued from Capacities Settings',
+      description: 'Personal API token from Capacities Settings, starting with cap-api-',
     },
     {
       displayName: 'Base URL',
@@ -48,5 +48,4 @@ export class CapacitiesApi implements ICredentialType {
       url: '/space',
     },
   };
-
 }
