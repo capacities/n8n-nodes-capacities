@@ -10,10 +10,7 @@ Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes
 
 ## Credentials
 
-The node supports two credential types. Choose one in the node's **Authentication** field.
-
-- **Capacities OAuth2 API** (recommended): authorization code flow with PKCE, using the client ID issued by Capacities. The node requests `api:read`, `api:write`, and `offline_access`, and refreshes tokens automatically.
-- **Capacities API Token**: a personal token (starting with `cap-api-`) generated in the Capacities desktop app under Settings → Capacities API, plus the base URL, which defaults to `https://api.capacities.io`.
+Create a **Capacities API** credential with a personal API token. Generate the token in the Capacities desktop app under Settings → Capacities API, choosing the space it can access and whether it is read-only. Tokens start with `cap-api-`. The base URL defaults to `https://api.capacities.io`.
 
 ## Operations
 

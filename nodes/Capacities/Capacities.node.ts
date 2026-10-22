@@ -29,21 +29,8 @@ export class Capacities implements INodeType {
     outputs: ['main'],
     usableAsTool: true,
     subtitle: '={{ $parameter["operation"] + ": " + $parameter["resource"] }}',
-    credentials: [
-      { name: 'capacitiesOAuth2Api', required: true, displayOptions: { show: { authentication: ['oAuth2'] } } },
-      { name: 'capacitiesApi', required: true, displayOptions: { show: { authentication: ['apiToken'] } } },
-    ],
+    credentials: [{ name: 'capacitiesApi', required: true }],
     properties: [
-      {
-        displayName: 'Authentication',
-        name: 'authentication',
-        type: 'options',
-        options: [
-          { name: 'OAuth2 (Recommended)', value: 'oAuth2' },
-          { name: 'Personal API Token', value: 'apiToken' },
-        ],
-        default: 'oAuth2',
-      },
       {
         displayName: 'Resource',
         name: 'resource',
@@ -71,14 +58,9 @@ export class Capacities implements INodeType {
   async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
     const items = this.getInputData();
     const returnData: INodeExecutionData[] = [];
-    const authentication = this.getNodeParameter('authentication', 0) as string;
-    const credentialName = authentication === 'oAuth2' ? 'capacitiesOAuth2Api' : 'capacitiesApi';
-    const baseUrl =
-      authentication === 'oAuth2'
-        ? 'https://api.capacities.io'
-        : ((await this.getCredentials('capacitiesApi')).baseUrl as string);
-    const client = new CapacitiesClient(baseUrl, (options) =>
-      this.helpers.httpRequestWithAuthentication.call(this, credentialName, options),
+    const { baseUrl } = await this.getCredentials('capacitiesApi');
+    const client = new CapacitiesClient(baseUrl as string, (options) =>
+      this.helpers.httpRequestWithAuthentication.call(this, 'capacitiesApi', options),
     );
 
     for (let i = 0; i < items.length; i++) {
