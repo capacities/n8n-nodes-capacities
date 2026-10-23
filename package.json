@@ -10,7 +10,9 @@
   ],
   "license": "MIT",
   "author": {
-    "name": "Capacities"
+    "name": "Capacities",
+    "email": "team@capacities.io",
+    "url": "https://capacities.io"
   },
   "repository": {
     "type": "git",
