@@ -1,4 +1,4 @@
-# n8n-nodes-capacities
+# @capacities/n8n-nodes-capacities
 
 This is an n8n community node for the [Capacities API](https://developers.capacities.io). It lets you read space structure, read and create objects, and delete objects in a Capacities space from an n8n workflow.
 
@@ -6,7 +6,9 @@ This is an n8n community node for the [Capacities API](https://developers.capaci
 
 ## Installation
 
-Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes/installation/) in the n8n community nodes documentation. In n8n, go to **Settings → Community Nodes**, choose **Install**, enter `n8n-nodes-capacities`, and confirm.
+Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes/installation/) in the n8n community nodes documentation. In n8n, go to **Settings → Community Nodes**, choose **Install**, enter `@capacities/n8n-nodes-capacities`, and confirm.
+
+The unscoped package `n8n-nodes-capacities` is deprecated. Install this package instead.
 
 ## Credentials
 
