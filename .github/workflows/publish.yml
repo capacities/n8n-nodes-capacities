@@ -25,16 +25,22 @@ jobs:
           registry-url: https://registry.npmjs.org
       - name: Set version and tag
         if: github.event_name == 'workflow_dispatch'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          npm version "$VERSION" --no-git-tag-version
-          git commit -am "Release v$VERSION"
-          git tag "v$VERSION"
-          git push origin HEAD "v$VERSION"
         env:
           VERSION: ${{ inputs.version }}
-      - run: npm ci --ignore-scripts
+        run: |
+          if git ls-remote --exit-code --tags origin "v$VERSION" >/dev/null; then
+            echo "::error::Tag v$VERSION already exists"
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ "$(node -p "require('./package.json').version")" != "$VERSION" ]; then
+            npm version "$VERSION" --no-git-tag-version
+            git commit -am "Release v$VERSION"
+          fi
+          git tag "v$VERSION"
+          git push origin HEAD:main "v$VERSION"
+      - run: npm ci --ignore-scripts --fetch-retries=5 --fetch-timeout=300000
       - run: npm run lint
       - run: npm run build
       - run: npm publish --provenance --access public
