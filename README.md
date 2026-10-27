@@ -52,6 +52,10 @@ npm run scan
 
 Load the built package into a local n8n instance with `npm run dev` for live reload.
 
+## Release
+
+Run the **Publish** workflow and enter the version. The job signs in as this repository's GitHub Actions trusted publisher, so it does not use an npm token. It publishes that version, then creates the `v` tag. Running it again for a version already on npm completes without publishing a second time.
+
 ## License
 
 [MIT](./LICENSE)

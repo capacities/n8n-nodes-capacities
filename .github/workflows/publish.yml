@@ -21,20 +21,28 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          # npm 11 publishes with GitHub OIDC. Node 22 ships npm 10, which sends
-          # setup-node's placeholder token and the registry answers 404.
           node-version: 24
           registry-url: https://registry.npmjs.org
           cache: npm
+
+      - name: Require npm 11
+        run: |
+          version=$(npm -v)
+          major=${version%%.*}
+          minor=$(printf '%s' "$version" | cut -d. -f2)
+          if [ "$major" -lt 11 ] || { [ "$major" -eq 11 ] && [ "$minor" -lt 5 ]; }; then
+            echo "npm ${version} cannot sign in with GitHub Actions; installing npm 11"
+            NPM_CONFIG_USERCONFIG=/dev/null npm install -g npm@11
+            version=$(npm -v)
+          fi
+          echo "Using npm ${version}"
+
       - name: Set version
+        id: version
         if: github.event_name == 'workflow_dispatch'
         env:
           VERSION: ${{ inputs.version }}
         run: |
-          if git ls-remote --exit-code --tags origin "v$VERSION" >/dev/null; then
-            echo "::error::Tag v$VERSION already exists"
-            exit 1
-          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if [ "$(node -p "require('./package.json').version")" != "$VERSION" ]; then
@@ -42,15 +50,34 @@ jobs:
             git commit -am "Release v$VERSION"
             git push origin HEAD:main
           fi
+          if NPM_CONFIG_USERCONFIG=/dev/null npm view "@capacities/n8n-nodes-capacities@$VERSION" version >/dev/null 2>&1; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "$VERSION is already on npm"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - run: npm ci --ignore-scripts --fetch-retries=5 --fetch-timeout=300000
+        if: steps.version.outputs.skip != 'true'
       - run: npm run lint
+        if: steps.version.outputs.skip != 'true'
       - run: npm run build
+        if: steps.version.outputs.skip != 'true'
       - run: npm run scan
+        if: steps.version.outputs.skip != 'true'
       - run: npm publish --provenance --access public
+        if: steps.version.outputs.skip != 'true'
+
       - name: Tag release
         if: github.event_name == 'workflow_dispatch'
         env:
           VERSION: ${{ inputs.version }}
         run: |
-          git tag "v$VERSION"
-          git push origin "v$VERSION"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --tags origin "v$VERSION" >/dev/null; then
+            echo "Tag v$VERSION already exists"
+          else
+            git tag "v$VERSION"
+            git push origin "v$VERSION"
+          fi
