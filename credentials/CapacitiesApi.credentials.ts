@@ -10,7 +10,10 @@ export class CapacitiesApi implements ICredentialType {
 
   displayName = 'Capacities API';
 
-  icon = 'file:../nodes/Capacities/capacities.svg' as const;
+  icon = {
+    light: 'file:../nodes/Capacities/capacities.svg',
+    dark: 'file:../nodes/Capacities/capacities.dark.svg',
+  } as const;
 
   documentationUrl = 'https://developers.capacities.io/api/overview/authentication';
 

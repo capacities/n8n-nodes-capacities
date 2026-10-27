@@ -39,11 +39,16 @@ Read the space structures and then create an object of the first structure:
 
 ## Development
 
+Use Node 22 (`nvm use`). The n8n vetting scanner depends on `isolated-vm`, which ships prebuilds for Node 22 and 24 only.
+
 ```bash
 npm install
 npm run build
 npm run lint
+npm run scan
 ```
+
+`npm run scan` runs the same `@n8n/scan-community-package@beta` checks as the n8n Creator Portal, against this repo rather than the published package. On Node 25 or newer it switches to the Node 22 binary from nvm.
 
 Load the built package into a local n8n instance with `npm run dev` for live reload.
 

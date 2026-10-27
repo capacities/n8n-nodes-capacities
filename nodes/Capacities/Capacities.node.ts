@@ -1,11 +1,12 @@
-import type {
-  IDataObject,
-  IExecuteFunctions,
-  INodeExecutionData,
-  INodeType,
-  INodeTypeDescription,
+import {
+  NodeConnectionTypes,
+  NodeOperationError,
+  type IDataObject,
+  type IExecuteFunctions,
+  type INodeExecutionData,
+  type INodeType,
+  type INodeTypeDescription,
 } from 'n8n-workflow';
-import { NodeOperationError } from 'n8n-workflow';
 import { CapacitiesClient } from './client/client';
 import {
   blocksDescription,
@@ -20,13 +21,16 @@ export class Capacities implements INodeType {
   description: INodeTypeDescription = {
     displayName: 'Capacities',
     name: 'capacities',
-    icon: 'file:capacities.svg',
+    icon: {
+      light: 'file:capacities.svg',
+      dark: 'file:capacities.dark.svg',
+    },
     group: ['transform'],
     version: 1,
     description: 'Read and write objects, blocks, and media in a Capacities space',
     defaults: { name: 'Capacities' },
-    inputs: ['main'],
-    outputs: ['main'],
+    inputs: [NodeConnectionTypes.Main],
+    outputs: [NodeConnectionTypes.Main],
     usableAsTool: true,
     subtitle: '={{ $parameter["operation"] + ": " + $parameter["resource"] }}',
     credentials: [{ name: 'capacitiesApi', required: true }],
@@ -59,8 +63,10 @@ export class Capacities implements INodeType {
     const items = this.getInputData();
     const returnData: INodeExecutionData[] = [];
     const { baseUrl } = await this.getCredentials('capacitiesApi');
-    const client = new CapacitiesClient(baseUrl as string, (options) =>
-      this.helpers.httpRequestWithAuthentication.call(this, 'capacitiesApi', options),
+    const client = new CapacitiesClient(
+      baseUrl as string,
+      (options) => this.helpers.httpRequestWithAuthentication.call(this, 'capacitiesApi', options),
+      this.getNode(),
     );
 
     for (let i = 0; i < items.length; i++) {

@@ -1,4 +1,11 @@
-import type { IDataObject, IHttpRequestMethods, IHttpRequestOptions } from 'n8n-workflow';
+import {
+  NodeApiError,
+  type IDataObject,
+  type IHttpRequestMethods,
+  type IHttpRequestOptions,
+  type INode,
+  type JsonObject,
+} from 'n8n-workflow';
 
 export type CapacitiesRequest = (options: IHttpRequestOptions) => Promise<unknown>;
 
@@ -16,6 +23,7 @@ export class CapacitiesClient {
   constructor(
     private readonly baseUrl: string,
     private readonly request: CapacitiesRequest,
+    private readonly node: INode,
   ) {}
 
   readonly space = {
@@ -45,7 +53,7 @@ export class CapacitiesClient {
         return await this.object.media.complete(upload.id);
       } catch (error) {
         await this.object.media.abort(upload.id).catch(() => undefined);
-        throw error;
+        throw new NodeApiError(this.node, error as JsonObject);
       }
     },
     media: {
