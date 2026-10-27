@@ -24,7 +24,8 @@ jobs:
           node-version-file: .nvmrc
           registry-url: https://registry.npmjs.org
           cache: npm
-      - name: Set version and tag
+          always-auth: true
+      - name: Set version
         if: github.event_name == 'workflow_dispatch'
         env:
           VERSION: ${{ inputs.version }}
@@ -38,11 +39,17 @@ jobs:
           if [ "$(node -p "require('./package.json').version")" != "$VERSION" ]; then
             npm version "$VERSION" --no-git-tag-version
             git commit -am "Release v$VERSION"
+            git push origin HEAD:main
           fi
-          git tag "v$VERSION"
-          git push origin HEAD:main "v$VERSION"
       - run: npm ci --ignore-scripts --fetch-retries=5 --fetch-timeout=300000
       - run: npm run lint
       - run: npm run build
       - run: npm run scan
       - run: npm publish --provenance --access public
+      - name: Tag release
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          git tag "v$VERSION"
+          git push origin "v$VERSION"
