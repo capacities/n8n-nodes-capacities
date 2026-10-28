@@ -16,18 +16,18 @@ Create a **Capacities API** credential with a personal API token. Generate the t
 
 ## Operations
 
-The node covers every method of the Capacities TypeScript SDK (`@capacities/api`).
+| Resource     | Operations                                                                 |
+| ------------ | -------------------------------------------------------------------------- |
+| Space        | Get, Get Structures                                                        |
+| Object       | Get, Create, Update, Delete, Create From URL                               |
+| Media        | Upload                                                                     |
+| Markdown     | Get, Create, Update                                                        |
+| Object Query | Search, List by Structure, List by Tag, List by Collection                 |
+| Block        | Append, Append to Daily Note, Delete, Update                               |
 
-| Resource     | Operations                                                                                   |
-| ------------ | -------------------------------------------------------------------------------------------- |
-| Space        | Get, Get Structures                                                                          |
-| Object       | Get, Create, Update, Delete, Create From URL, Create From Media                             |
-| Media        | Initialize Upload, Upload Part, Complete Upload, Abort Upload                                |
-| Markdown     | Get, Create, Update                                                                          |
-| Object Query | Search, List by Structure, List by Tag, List by Collection                                   |
-| Block        | Append, Append to Daily Note, Delete, Update                                                 |
+**Upload** reads the file from an input binary field. The node initializes the upload, sends each part, completes it, and aborts the upload if a step fails. Set the file name, title, and collection IDs on the node. An empty file name or title uses the binary file name.
 
-Create From Media takes a binary property and runs the full upload flow: it initializes the upload, sends each part, completes it, and aborts if any step fails. The request bodies for JSON operations follow the Capacities API reference.
+**Append** and **Append to Daily Note** send exactly one of Markdown or a blocks array. The blocks value is the array itself. A structure id is a built-in id such as `RootPage`, or the UUID of a custom structure from Get Structures. It is not an object id. Other JSON bodies follow the Capacities API reference.
 
 ## Example workflow
 
@@ -39,16 +39,19 @@ Read the space structures and then create an object of the first structure:
 
 ## Development
 
-Use Node 22 (`nvm use`). The n8n vetting scanner depends on `isolated-vm`, which ships prebuilds for Node 22 and 24 only.
+Use Node 24 (`nvm use`). Current n8n requires it, and `isolated-vm` ships a prebuild for Node 24. Node 25 makes `npm run dev` fail while installing n8n. `npm run dev` switches to the Node 24 binary from nvm when the current Node is different.
 
 ```bash
 npm install
 npm run build
 npm run lint
 npm run scan
+npm run check
 ```
 
-`npm run scan` runs the same `@n8n/scan-community-package@beta` checks as the n8n Creator Portal, against this repo rather than the published package. On Node 25 or newer it switches to the Node 22 binary from nvm.
+`npm run scan` runs the same `@n8n/scan-community-package@beta` checks as the n8n Creator Portal, against this repo rather than the published package. On Node 25 or newer it switches to Node 24 from nvm.
+
+`npm run check` is the local publish dry run. It uses Node 24, then runs lint, build, scan, and checks the append, structure id, and media upload requests against the public API schemas in the sibling `capacities-portal` checkout. `npm run check:requests` runs only that request check. Neither command publishes.
 
 Load the built package into a local n8n instance with `npm run dev` for live reload.
 

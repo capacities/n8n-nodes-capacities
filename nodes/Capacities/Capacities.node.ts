@@ -14,6 +14,7 @@ import {
   mediaDescription,
   objectDescription,
   objectsDescription,
+  requestBodyDescription,
   spaceDescription,
 } from './descriptions';
 
@@ -56,6 +57,7 @@ export class Capacities implements INodeType {
       ...markdownDescription,
       ...objectsDescription,
       ...blocksDescription,
+      ...requestBodyDescription,
     ],
   };
 
@@ -73,9 +75,47 @@ export class Capacities implements INodeType {
       const resource = this.getNodeParameter('resource', i) as string;
       const operation = this.getNodeParameter('operation', i) as string;
       const key = `${resource}.${operation}`;
-      const body = () => this.getNodeParameter('body', i) as IDataObject;
       const str = (name: string) => this.getNodeParameter(name, i) as string;
-      const page = () => [str('cursor') || undefined, this.getNodeParameter('pageSize', i) as number] as const;
+      const jsonValue = (value: unknown, label: string): unknown => {
+        if (typeof value !== 'string') return value;
+        try {
+          return JSON.parse(value);
+        } catch (error) {
+          throw new NodeOperationError(this.getNode(), `${label} is not valid JSON`, {
+            itemIndex: i,
+            description: error instanceof Error ? error.message : undefined,
+          });
+        }
+      };
+      const body = (): IDataObject => {
+        const parsed = jsonValue(this.getNodeParameter('body', i, '{}'), 'Body (JSON)');
+        if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+          throw new NodeOperationError(this.getNode(), 'Body (JSON) must be a JSON object', { itemIndex: i });
+        }
+        return parsed as IDataObject;
+      };
+      const appendFields = (): IDataObject => {
+        const contentType = this.getNodeParameter('appendContent', i, 'markdown') as string;
+        const markdown = (this.getNodeParameter('appendMarkdown', i, '') as string).trim();
+        const legacy = body();
+        if (contentType === 'blocks') {
+          const blocks = jsonValue(this.getNodeParameter('appendBlocks', i, '[]'), 'Blocks (JSON)');
+          if (Array.isArray(blocks) && blocks.length > 0) return { blocks: blocks as IDataObject[] };
+          if (Array.isArray(legacy.blocks) && legacy.blocks.length > 0) return { blocks: legacy.blocks as IDataObject[] };
+          throw new NodeOperationError(this.getNode(), 'Blocks (JSON) must be a non-empty array of blocks', {
+            itemIndex: i,
+          });
+        }
+        if (markdown) return { markdown };
+        if (typeof legacy.markdown === 'string' && legacy.markdown.length > 0) return { markdown: legacy.markdown };
+        if (Array.isArray(legacy.blocks) && legacy.blocks.length > 0) return { blocks: legacy.blocks as IDataObject[] };
+        throw new NodeOperationError(this.getNode(), 'Enter markdown, or switch Content to Blocks', { itemIndex: i });
+      };
+      const page = () => {
+        const cursor = (this.getNodeParameter('cursor', i, '') as string).trim();
+        const pageSize = this.getNodeParameter('pageSize', i, 100) as number;
+        return [cursor || undefined, pageSize] as const;
+      };
       let response: unknown;
 
       switch (key) {
@@ -88,9 +128,14 @@ export class Capacities implements INodeType {
         case 'object.get':
           response = await client.object.get(str('id'));
           break;
-        case 'object.create':
-          response = await client.object.create(body());
+        case 'object.create': {
+          const structureId = (this.getNodeParameter('structureId', i, '') as string).trim();
+          response = await client.object.create({
+            ...body(),
+            ...(structureId ? { structureId } : {}),
+          });
           break;
+        }
         case 'object.update':
           response = await client.object.update(body());
           break;
@@ -100,7 +145,7 @@ export class Capacities implements INodeType {
         case 'object.createFromUrl':
           response = await client.object.createFromUrl(body());
           break;
-        case 'object.createFromMedia': {
+        case 'media.upload': {
           const name = str('binaryPropertyName');
           const binary = items[i].binary?.[name];
           if (!binary) {
@@ -108,35 +153,17 @@ export class Capacities implements INodeType {
           }
           const collections = str('collections')
             .split(',')
-            .map((c) => c.trim())
+            .map((id) => id.trim())
             .filter(Boolean);
-          response = await client.object.createFromMedia({
+          response = await client.media.upload({
             buffer: await this.helpers.getBinaryDataBuffer(i, name),
-            fileName: binary.fileName ?? 'file',
+            fileName: str('fileName').trim() || binary.fileName || 'file',
             mimeType: binary.mimeType,
-            title: str('title') || undefined,
+            title: str('title').trim() || undefined,
             collections: collections.length ? collections : undefined,
           });
           break;
         }
-        case 'media.init':
-          response = await client.object.media.init(body());
-          break;
-        case 'media.uploadPart': {
-          const name = str('binaryPropertyName');
-          response = await client.object.media.uploadPart(
-            str('id'),
-            this.getNodeParameter('partNumber', i) as number,
-            await this.helpers.getBinaryDataBuffer(i, name),
-          );
-          break;
-        }
-        case 'media.complete':
-          response = await client.object.media.complete(str('id'));
-          break;
-        case 'media.abort':
-          response = await client.object.media.abort(str('id'));
-          break;
         case 'markdown.get':
           response = await client.object.markdown.get(str('id'));
           break;
@@ -158,12 +185,30 @@ export class Capacities implements INodeType {
         case 'objects.collection':
           response = await client.objects.collection(str('id'), ...page());
           break;
-        case 'blocks.append':
-          response = await client.blocks.append(body());
+        case 'blocks.append': {
+          const legacy = body();
+          const objectId =
+            (this.getNodeParameter('objectId', i, '') as string).trim() ||
+            (typeof legacy.id === 'string' ? legacy.id : '');
+          if (!objectId) {
+            throw new NodeOperationError(this.getNode(), 'Object ID is required', { itemIndex: i });
+          }
+          response = await client.blocks.append({ id: objectId, ...appendFields() });
           break;
-        case 'blocks.dailyNoteAppend':
-          response = await client.blocks.dailyNote.append(body());
+        }
+        case 'blocks.dailyNoteAppend': {
+          const legacy = body();
+          const date =
+            (this.getNodeParameter('date', i, '') as string).trim() ||
+            (typeof legacy.date === 'string' ? legacy.date : '');
+          const noTimeStamp = this.getNodeParameter('noTimeStamp', i, legacy.noTimeStamp === true) as boolean;
+          response = await client.blocks.dailyNote.append({
+            ...appendFields(),
+            ...(date ? { date } : {}),
+            noTimeStamp,
+          });
           break;
+        }
         case 'blocks.delete':
           response = await client.blocks.block.delete(str('objectId'), str('blockId'));
           break;

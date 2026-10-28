@@ -45,7 +45,9 @@
     "build": "n8n-node build",
     "lint": "n8n-node lint",
     "scan": "node scripts/scan.mjs",
-    "dev": "n8n-node dev"
+    "check:requests": "node scripts/check-requests.mjs",
+    "check": "node scripts/publish-check.mjs",
+    "dev": "node scripts/dev.mjs"
   },
   "devDependencies": {
     "@n8n/node-cli": "^0.23.0",

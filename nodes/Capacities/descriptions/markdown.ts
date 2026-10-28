@@ -29,7 +29,10 @@ export const markdownDescription: INodeProperties[] = [
     name: 'structureId',
     type: 'string',
     required: true,
-    default: '',
+    default: 'RootPage',
+    placeholder: 'e.g. RootPage',
+    description:
+      'Built-in ID such as RootPage, or the UUID of a custom structure from Get Structures. This is not an object ID.',
     displayOptions: { show: { ...show, operation: ['create'] } },
   },
   {

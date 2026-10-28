@@ -18,20 +18,14 @@ export const objectsDescription: INodeProperties[] = [
     default: 'search',
   },
   {
-    displayName: 'Body (JSON)',
-    name: 'body',
-    type: 'json',
-    default: '{}',
-    description: 'Search body: query, optional structureIds, and limit',
-    displayOptions: { show: { ...show, operation: ['search'] } },
-  },
-  {
     displayName: 'ID',
     name: 'id',
     type: 'string',
     required: true,
     default: '',
-    description: 'Structure ID, tag ID, or collection ID to list by, depending on the operation',
+    placeholder: 'e.g. RootPage',
+    description:
+      'Structure ID (RootPage or a custom structure UUID), tag ID, or collection ID, depending on the operation',
     displayOptions: { show: { ...show, operation: ['structure', 'tag', 'collection'] } },
   },
   {

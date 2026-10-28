@@ -1,3 +1,4 @@
+export { requestBodyDescription } from './body';
 export { spaceDescription } from './space';
 export { objectDescription } from './object';
 export { mediaDescription } from './media';

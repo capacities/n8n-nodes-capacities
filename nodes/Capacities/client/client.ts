@@ -1,5 +1,6 @@
 import {
   NodeApiError,
+  NodeOperationError,
   type IDataObject,
   type IHttpRequestMethods,
   type IHttpRequestOptions,
@@ -37,42 +38,15 @@ export class CapacitiesClient {
     update: (body: IDataObject) => this.call('PATCH', '/object', { body }),
     delete: (id: string, hardDelete?: boolean) => this.call('DELETE', '/object', { qs: { id, hardDelete } }),
     createFromUrl: (body: IDataObject) => this.call('POST', '/object/url', { body }),
-    createFromMedia: async (file: MediaFile) => {
-      const upload = (await this.object.media.init({
-        fileName: file.fileName,
-        fileSize: file.buffer.length,
-        fileType: file.mimeType,
-        title: file.title,
-        collections: file.collections,
-      })) as MediaUploadInit;
-      try {
-        for (let partNumber = 1; partNumber <= upload.partCount; partNumber++) {
-          const start = (partNumber - 1) * upload.partSize;
-          await this.object.media.uploadPart(upload.id, partNumber, file.buffer.subarray(start, start + upload.partSize));
-        }
-        return await this.object.media.complete(upload.id);
-      } catch (error) {
-        await this.object.media.abort(upload.id).catch(() => undefined);
-        throw new NodeApiError(this.node, error as JsonObject);
-      }
-    },
-    media: {
-      init: (body: IDataObject) => this.call('POST', '/object/media/upload', { body }),
-      uploadPart: (id: string, partNumber: number, body: Buffer) =>
-        this.call('PUT', '/object/media/upload/part', {
-          qs: { id, partNumber },
-          body,
-          json: false,
-          headers: { 'Content-Type': 'application/octet-stream' },
-        }),
-      complete: (id: string) => this.call('POST', '/object/media/upload/complete', { body: { id } }),
-      abort: (id: string) => this.call('POST', '/object/media/upload/abort', { body: { id } }),
-    },
     markdown: {
       get: (id: string) => this.call('GET', '/object/markdown', { qs: { id } }),
       create: (body: IDataObject) => this.call('POST', '/object/markdown', { body }),
       update: (body: IDataObject) => this.call('PATCH', '/object/markdown', { body }),
     },
+  };
+
+  readonly media = {
+    upload: (file: MediaFile) => this.uploadMedia(file),
   };
 
   readonly objects = {
@@ -96,7 +70,66 @@ export class CapacitiesClient {
     },
   };
 
+  private async uploadMedia(file: MediaFile) {
+    const upload = (await this.call('POST', '/object/media/upload', {
+      body: {
+        fileName: file.fileName,
+        fileSize: file.buffer.length,
+        fileType: file.mimeType,
+        title: file.title,
+        collections: file.collections,
+      },
+    })) as MediaUploadInit;
+
+    try {
+      for (let partNumber = 1; partNumber <= upload.partCount; partNumber++) {
+        const start = (partNumber - 1) * upload.partSize;
+        await this.call('PUT', '/object/media/upload/part', {
+          qs: { id: upload.id, partNumber },
+          body: file.buffer.subarray(start, start + upload.partSize),
+          json: false,
+          headers: { 'Content-Type': 'application/octet-stream' },
+        });
+      }
+      return await this.call('POST', '/object/media/upload/complete', { body: { id: upload.id } });
+    } catch (error) {
+      await this.call('POST', '/object/media/upload/abort', { body: { id: upload.id } }).catch(() => undefined);
+      throw new NodeApiError(this.node, error as JsonObject);
+    }
+  }
+
   private call(method: IHttpRequestMethods, path: string, extra: Partial<IHttpRequestOptions> = {}) {
-    return this.request({ method, url: `${this.baseUrl}${path}`, json: true, ...extra });
+    const { headers: extraHeaders, qs, body, ...rest } = extra;
+    const payload = parseJsonBody(body, this.node);
+    const headers: IDataObject = { ...extraHeaders };
+    if (payload !== undefined && rest.json !== false && !Buffer.isBuffer(payload)) {
+      headers['Content-Type'] = (headers['Content-Type'] as string | undefined) ?? 'application/json';
+    }
+    return this.request({
+      method,
+      url: `${this.baseUrl}${path}`,
+      json: true,
+      ...rest,
+      body: payload,
+      qs: qs ? definedQuery(qs) : undefined,
+      headers,
+    });
+  }
+}
+
+function definedQuery(qs: IDataObject): IDataObject {
+  return Object.fromEntries(Object.entries(qs).filter(([, value]) => value !== undefined && value !== ''));
+}
+
+function parseJsonBody(body: IHttpRequestOptions['body'], node: INode): IHttpRequestOptions['body'] {
+  if (typeof body !== 'string') return body;
+  const trimmed = body.trim();
+  if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) return body;
+  try {
+    return JSON.parse(trimmed) as IHttpRequestOptions['body'];
+  } catch (error) {
+    throw new NodeOperationError(node, 'Request body is not valid JSON', {
+      description: error instanceof Error ? error.message : undefined,
+    });
   }
 }
