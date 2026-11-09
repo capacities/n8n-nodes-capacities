@@ -1,6 +1,6 @@
 {
   "name": "@capacities/n8n-nodes-capacities",
-  "version": "0.1.4",
+  "version": "1.2.0",
   "description": "n8n community node for the Capacities HTTP API.",
   "keywords": [
     "n8n-community-node-package",
