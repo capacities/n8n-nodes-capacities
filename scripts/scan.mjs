@@ -76,9 +76,16 @@ const install = spawnSync(npmBin, ['install', scannerSpec], {
 });
 if (install.status !== 0) process.exit(install.status ?? 1);
 
-const { analyzePackage, SOURCE_FILE_PATTERNS } = await import(
-  join(cacheDir, 'node_modules', '@n8n', 'scan-community-package', 'scanner', 'scanner.mjs')
+// 0.42 moved the scanner from scanner/scanner.mjs to dist/scanner.js.
+const scannerDir = join(cacheDir, 'node_modules', '@n8n', 'scan-community-package');
+const scannerEntry = [join(scannerDir, 'dist', 'scanner.js'), join(scannerDir, 'scanner', 'scanner.mjs')].find((path) =>
+  existsSync(path),
 );
+if (!scannerEntry) {
+  console.error(`No scanner entry found in ${scannerDir}. The package layout changed again.`);
+  process.exit(1);
+}
+const { analyzePackage, SOURCE_FILE_PATTERNS } = await import(scannerEntry);
 
 if (!existsSync(join(root, 'dist'))) {
   console.error('dist/ is missing. Run npm run build before the community package scan.');
