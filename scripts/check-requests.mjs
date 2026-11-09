@@ -184,6 +184,23 @@ record(
   listedUuid.calls.find((call) => call.url.endsWith('/objects/structure')).qs,
 );
 
+const listedByTime = await execute({
+  resource: 'objects',
+  operation: 'time',
+  timeMode: 'lastUpdated',
+  timeFrom: '2026-01-01T00:00:00.000Z',
+  timeTo: '',
+  timeStructureIds: 'RootPage, ' + structureUuid,
+  cursor: '',
+  pageSize: 50,
+});
+const timeCall = listedByTime.calls.find((call) => call.url === 'https://api.capacities.io/objects/time');
+assert(timeCall, 'No request to /objects/time');
+assert(timeCall.arrayFormat === 'repeat', 'List by time does not repeat structureId keys');
+assert(timeCall.qs.range?.to === undefined, 'List by time sent an empty range.to');
+assert(timeCall.qs.structureId?.length === 2, 'List by time did not split structure IDs');
+record('list by time', 'listObjectsByTimeParamsSchema', timeCall.qs);
+
 const uploaded = await execute(
   {
     resource: 'media',

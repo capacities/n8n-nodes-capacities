@@ -22,7 +22,7 @@ Create a **Capacities API** credential with a personal API token. Generate the t
 | Object       | Get, Create, Update, Delete, Create From URL                               |
 | Media        | Upload                                                                     |
 | Markdown     | Get, Create, Update                                                        |
-| Object Query | Search, List by Structure, List by Tag, List by Collection                 |
+| Object Query | Search, List by Structure, List by Tag, List by Collection, List by Time   |
 | Block        | Append, Append to Daily Note, Delete, Update                               |
 
 **Upload** reads the file from an input binary field. The node initializes the upload, sends each part, completes it, and aborts the upload if a step fails. Set the file name, title, and collection IDs on the node. An empty file name or title uses the binary file name.

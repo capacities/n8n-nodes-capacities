@@ -185,6 +185,26 @@ export class Capacities implements INodeType {
         case 'objects.collection':
           response = await client.objects.collection(str('id'), ...page());
           break;
+        case 'objects.time': {
+          const from = str('timeFrom').trim();
+          const to = str('timeTo').trim();
+          if (!from && !to) {
+            throw new NodeOperationError(this.getNode(), 'Set From, To, or both', { itemIndex: i });
+          }
+          const structureId = str('timeStructureIds')
+            .split(',')
+            .map((id) => id.trim())
+            .filter(Boolean);
+          response = await client.objects.time(
+            {
+              mode: str('timeMode') as 'createdAt' | 'lastUpdated',
+              range: { ...(from ? { from: toIsoDateTime(from) } : {}), ...(to ? { to: toIsoDateTime(to) } : {}) },
+              ...(structureId.length ? { structureId } : {}),
+            },
+            ...page(),
+          );
+          break;
+        }
         case 'blocks.append': {
           const legacy = body();
           const objectId =
@@ -224,4 +244,11 @@ export class Capacities implements INodeType {
 
     return [returnData];
   }
+}
+
+/** The API needs an ISO 8601 datetime with `Z` or an offset. n8n date pickers send local time without one. */
+function toIsoDateTime(value: string): string {
+  if (/(Z|[+-]\d{2}:\d{2})$/i.test(value)) return value;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toISOString();
 }

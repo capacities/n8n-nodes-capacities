@@ -18,6 +18,12 @@ export type MediaFile = {
   collections?: string[];
 };
 
+export type ListObjectsByTimeParams = {
+  mode: 'createdAt' | 'lastUpdated';
+  range: { from?: string; to?: string };
+  structureId?: string[];
+};
+
 type MediaUploadInit = { id: string; partSize: number; partCount: number };
 
 export class CapacitiesClient {
@@ -57,6 +63,11 @@ export class CapacitiesClient {
       this.call('GET', '/objects/tag', { qs: { id, cursor, pageSize } }),
     collection: (id: string, cursor?: string, pageSize?: number) =>
       this.call('GET', '/objects/collection', { qs: { id, cursor, pageSize } }),
+    time: (params: ListObjectsByTimeParams, cursor?: string, pageSize?: number) =>
+      this.call('GET', '/objects/time', {
+        qs: { ...params, cursor, pageSize },
+        arrayFormat: 'repeat',
+      }),
   };
 
   readonly blocks = {
